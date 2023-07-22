@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  FlatList,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from 'react-native';
-
+//Constants
+import { currencyByRupee } from './constant/constants';
+//Components
+import CurrencyButton from './components/currencyButton'; 
+import Snackbar from 'react-native-snackbar';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -19,16 +26,74 @@ type SectionProps = PropsWithChildren<{
 
 function App(): JSX.Element {
 
+  const [inputValue, setInputValue] = useState('');
+  const [targetCurrency, setTargetCurrency] = useState('');
+  const [resultValue, setResult] = useState('');
 
+  const buttonPressed = (targetValue: Currency) => {
+    if (!inputValue) {
+      return Snackbar.show({
+        text: 'Please enter a value',
+        backgroundColor: '#EA7773',
+        textColor: '#FFFFFF',
+      });
+    } 
+    const inputAmmount = parseFloat(inputValue);
+    if (!isNaN(inputAmmount)) {
+      const convertedValue = inputAmmount * targetValue.value;
+      const result = `${targetValue.symbol} ${convertedValue.toFixed(2)} `;
+      setResult(result);
+      setTargetCurrency(targetValue.name);
+    } else {
+      return Snackbar.show({
+        text: 'Not a Valid number to Convert',
+        backgroundColor: '#EA7773',
+        textColor: '#FFFFFF',
+      });
+    }
+  }
 
   return (
     <SafeAreaView>
       <StatusBar
       />
-      <View>
-        <Text>hello</Text>
+      <View style={styles.container}>
+        <View style={styles.topContainer}>
+          <View style={styles.rupeesContainer}>
+            <Text style={styles.rupee}>₹</Text>
+            <TextInput
+              style={styles.inputAmountField}
+              keyboardType="numeric"
+              maxLength={10}
+              value={inputValue}
+              clearButtonMode='always'
+              placeholder="Enter Amount"
+              placeholderTextColor="#000000"
+              onChangeText={setInputValue}
+              />
+          </View>
+          {resultValue && (
+            <Text style={styles.resultTxt}>
+              {resultValue}
+            </Text>
+          )}
+        </View>
+        <View style={styles.bottomContainer}>
+          <FlatList
+            numColumns={3}
+            data={currencyByRupee}
+            keyExtractor={(item) => item.name}
+            renderItem={(item) => (
+              <Pressable
+                style={[styles.button, targetCurrency === item.item.name && styles.selected]}
+                onPress={() => buttonPressed(item.item)}>
+                <CurrencyButton name={item.item.name} flag={item.item.flag} />
+                </Pressable>
+            )}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </SafeAreaView> 
   );
 }
 
@@ -68,6 +133,7 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     flex: 3,
+    backgroundColor: '#515151',
   },
   button: {
     flex: 1,
